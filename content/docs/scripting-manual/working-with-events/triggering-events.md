@@ -63,7 +63,7 @@ TriggerLatentServerEvent("eventName", bps, eventParam1, eventParam2);
 TriggerLatentServerEvent("eventName", bps, eventParam1, eventParam2);
 ```
 
-----------
+---
 
 ### Triggering client events
 The same is applicable for triggering client events.
@@ -82,11 +82,10 @@ TriggerClientEvent("eventName", targetPlayer, eventParam1, eventParam2)
 player.TriggerEvent("eventName", eventParam1, eventParam2);
 
 // Method two. Trigger an event for everyone on the server.
-// Note you do not need to specify a target of -1 for C#.
 TriggerClientEvent("eventName", eventParam1, eventParam2);
 
-// Method three. Again, triggering an event directly on a client source (like method one),
-// but using the TriggerClientEvent native function instead.
+// Method three. Triggering an event directly on a client source,
+// but using the TriggerClientEvent function instead.
 TriggerClientEvent(player, "eventName", eventParam1, eventParam2);
 ```
 
@@ -95,7 +94,6 @@ TriggerClientEvent(player, "eventName", eventParam1, eventParam2);
 // Use -1 for "targetPlayer" if you want the event to trigger on all connected clients.
 emitNet("eventName", targetPlayer, eventParam1, eventParam2);
 ```
-
 
 #### Triggering latent client events
 Latent events should be used when needing to transfer a large amount of data from server -> client, as latent events **do not** block the clients entire network channel, unlike `TriggerClientEvent`.
@@ -106,29 +104,46 @@ Latent events take an extra parameter 'bps' which stands for 'bytes per second',
 
 'bps' applies to a single target. I.e. if `targetPlayer` is set to `-1` and event is sent to all connected users - the server will be effectively sending `bps * player_count` bytes every second.
 
-Note: setting `bps` to extremely large numbers (approximately `10 000 000` and above) may lead connectivity and performance issues when large objects are sent. Because the system will try to send everything at once.
+##### Recommended bps values
 
-**Lua**
-```lua
--- Use -1 for "targetPlayer" if you want the event to trigger on all connected clients.
-TriggerLatentClientEvent("eventName", targetPlayer, bps, eventParam1, eventParam2)
-```
+| Use Case | Recommended bps | Notes |
+|----------|-----------------|-------|
+| Small data (< 10 KB) | 50,000 - 100,000 | Quick delivery without network strain |
+| Medium data (10-100 KB) | 100,000 - 500,000 | Balance between speed and stability |
+| Large data (100 KB - 1 MB) | 500,000 - 1,000,000 | Monitor server performance |
+| Very large data (> 1 MB) | Consider chunking | Split into smaller events |
 
-**C#**
-```csharp
-// Method one. Trigger an event directly on a client source.
-player.TriggerLatentEvent("eventName", bps, eventParam1, eventParam2);
+##### When to use latent events
 
-// Method two. Trigger an event for everyone on the server.
-TriggerLatentClientEvent("eventName", bps, eventParam1, eventParam2); // Note you do not need to specify a target of -1.
+Use latent events when your payload exceeds approximately **10-15 KB**. For reference:
+- A simple table with player data: ~100-500 bytes
+- - Inventory data with items: ~1-5 KB
+  - - Large configuration tables: ~10-50 KB
+    - - Map/world data: potentially several MB
+     
+      - Note: setting `bps` to extremely large numbers (approximately `10 000 000` and above) may lead connectivity and performance issues when large objects are sent. Because the system will try to send everything at once.
+     
+      - **Lua**
+      - ```lua
+        -- Use -1 for "targetPlayer" if you want the event to trigger on all connected clients.
+        TriggerLatentClientEvent("eventName", targetPlayer, bps, eventParam1, eventParam2)
+        ```
 
-// Method three. Again, triggering an event directly on a client source (like method one),
-// but using the TriggerLatentClientEvent function instead.
-TriggerLatentClientEvent(player, "eventName", bps, eventParam1, eventParam2);
-```
+        **C#**
+        ```csharp
+        // Method one. Trigger an event directly on a client source.
+        player.TriggerLatentEvent("eventName", bps, eventParam1, eventParam2);
 
-**JS**
-```js
-// Use -1 for "targetPlayer" if you want the event to trigger on all connected clients.
-TriggerLatentClientEvent("eventName", targetPlayer, bps, eventParam1, eventParam2);
-```
+        // Method two. Trigger an event for everyone on the server.
+        TriggerLatentClientEvent("eventName", bps, eventParam1, eventParam2);
+
+        // Method three. Triggering an event directly on a client source,
+        // but using the TriggerLatentClientEvent function instead.
+        TriggerLatentClientEvent(player, "eventName", bps, eventParam1, eventParam2);
+        ```
+
+        **JS**
+        ```js
+        // Use -1 for "targetPlayer" if you want the event to trigger on all connected clients.
+        TriggerLatentClientEvent("eventName", targetPlayer, bps, eventParam1, eventParam2);
+        ```
